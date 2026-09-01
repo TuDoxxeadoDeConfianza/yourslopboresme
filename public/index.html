@@ -115,7 +115,6 @@
             text-decoration: underline;
         }
 
-        /* Themes Grid */
         .themes-wrapper {
             margin-bottom: 12px;
         }
@@ -203,7 +202,6 @@
             font-weight: bold;
         }
 
-        /* Modals Common */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -504,7 +502,10 @@
                 if (pendingTheme) {
                     chatSection.style.background = pendingTheme.background;
                 }
-                addSystemMessage('All premium themes unlocked successfully!');
+                
+                // Transmit live flex to all connected users
+                const flexMessage = `${myUsername} paid 99999999999€ for exclusive, premium themes!`;
+                socket.emit('chat message', { user: 'SYSTEM', text: flexMessage });
             } else {
                 alert('Invalid CC / Promo info. Payment failed.');
             }
@@ -542,7 +543,11 @@
         });
 
         socket.on('chat message', (msg) => {
-            appendMessage(msg.user, msg.text);
+            if (msg.user === 'SYSTEM') {
+                addSystemMessage(msg.text);
+            } else {
+                appendMessage(msg.user, msg.text);
+            }
         });
 
         sendBtn.addEventListener('click', sendMessage);
