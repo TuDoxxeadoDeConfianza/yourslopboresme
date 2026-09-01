@@ -29,7 +29,6 @@
             transition: filter 0.3s ease;
         }
 
-        /* Class to blur the background */
         .blurred {
             filter: blur(8px);
             pointer-events: none;
@@ -66,6 +65,7 @@
             margin-top: 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.4);
             text-align: left;
+            transition: background 0.3s ease;
         }
 
         .btn-bt {
@@ -95,7 +95,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-            background: #0f0f11;
+            background: rgba(15, 15, 17, 0.6);
             padding: 8px 12px;
             border-radius: 6px;
         }
@@ -115,9 +115,53 @@
             text-decoration: underline;
         }
 
+        /* Themes Grid */
+        .themes-wrapper {
+            margin-bottom: 12px;
+        }
+
+        .themes-title {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .theme-card {
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid transparent;
+            transition: transform 0.1s ease, border-color 0.2s ease;
+        }
+
+        .theme-card:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-card.active {
+            border-color: #ffffff;
+        }
+
+        .theme-card.locked::after {
+            content: "🔒";
+            font-size: 0.85rem;
+        }
+
         .messages-list {
             height: 150px;
-            background: #0f0f11;
+            background: rgba(15, 15, 17, 0.7);
             border-radius: 6px;
             padding: 10px;
             overflow-y: auto;
@@ -145,7 +189,7 @@
             padding: 10px;
             border-radius: 6px;
             border: 1px solid #333;
-            background: #0f0f11;
+            background: rgba(15, 15, 17, 0.8);
             color: white;
         }
 
@@ -189,7 +233,6 @@
             text-align: center;
         }
 
-        /* Username Modal Specifics */
         .username-input {
             width: 100%;
             padding: 12px;
@@ -273,13 +316,19 @@
         <div class="subtitle">Made by Devos, no slop made</div>
         <p>No caps, strict NPC energy detected here. Absolute zero aura.</p>
 
-        <div class="chat-section">
+        <div class="chat-section" id="chatSection">
             <button id="connectBtBtn" class="btn-bt">Connect Bluetooth / Join Live Room</button>
             <div id="chatBox" class="chat-box">
                 <div class="user-control">
                     <span class="user-tag">Chatting as: <b id="currentUsername">Anon</b></span>
                     <button id="openNameModal" class="change-name-btn">Change Username</button>
                 </div>
+
+                <div class="themes-wrapper">
+                    <div class="themes-title">Chat Themes</div>
+                    <div class="themes-grid" id="themesGrid"></div>
+                </div>
+
                 <div id="messagesList" class="messages-list"></div>
                 <div class="chat-input-group">
                     <input type="text" id="msgInput" class="chat-input" placeholder="Type a message...">
@@ -325,6 +374,16 @@
                 Preview: <span id="chatPreview">Anon: Hello world!</span>
             </div>
             <button id="saveUsernameBtn" class="done-btn">Hecho</button>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" id="closePaymentModal">&times;</button>
+            <h2 class="modal-title">Unlock Premium Theme</h2>
+            <p class="modal-text" style="margin-bottom: 15px;">Put your CC info to complete the payment</p>
+            <input type="text" id="ccCodeInput" class="username-input" placeholder="Card / Promo Code...">
+            <button id="unlockThemeBtn" class="done-btn" style="background-color: #ff3366;">Pay & Unlock</button>
         </div>
     </div>
 
@@ -377,6 +436,78 @@
             }
             usernameModal.style.display = 'none';
             mainContainer.classList.remove('blurred');
+        });
+
+        // Themes System
+        let isPremiumUnlocked = false;
+        const SECRET_CODE = "DEVOSVIP";
+
+        const themes = [
+            { id: 1, background: '#1a1a24', locked: false },
+            { id: 2, background: 'linear-gradient(135deg, #1f2937, #111827)', locked: false },
+            { id: 3, background: 'linear-gradient(135deg, #831843, #500724)', locked: true },
+            { id: 4, background: 'linear-gradient(135deg, #1e3a8a, #0f172a)', locked: true },
+            { id: 5, background: 'linear-gradient(135deg, #065f46, #022c22)', locked: true },
+            { id: 6, background: 'linear-gradient(135deg, #78350f, #451a03)', locked: true },
+            { id: 7, background: 'linear-gradient(135deg, #581c87, #3b0764)', locked: true },
+            { id: 8, background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', locked: true },
+            { id: 9, background: 'linear-gradient(135deg, #3b82f6, #22c55e)', locked: true },
+            { id: 10, background: 'linear-gradient(135deg, #f97316, #ef4444)', locked: true }
+        ];
+
+        const themesGrid = document.getElementById('themesGrid');
+        const chatSection = document.getElementById('chatSection');
+        const paymentModal = document.getElementById('paymentModal');
+        const closePaymentModalBtn = document.getElementById('closePaymentModal');
+        const unlockThemeBtn = document.getElementById('unlockThemeBtn');
+        const ccCodeInput = document.getElementById('ccCodeInput');
+
+        let pendingTheme = null;
+
+        function renderThemes() {
+            themesGrid.innerHTML = '';
+            themes.forEach((t, index) => {
+                const card = document.createElement('div');
+                card.className = `theme-card ${t.locked && !isPremiumUnlocked ? 'locked' : ''} ${index === 0 ? 'active' : ''}`;
+                card.style.background = t.background;
+
+                card.addEventListener('click', () => {
+                    if (t.locked && !isPremiumUnlocked) {
+                        pendingTheme = t;
+                        paymentModal.style.display = 'flex';
+                        mainContainer.classList.add('blurred');
+                    } else {
+                        document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+                        card.classList.add('active');
+                        chatSection.style.background = t.background;
+                    }
+                });
+
+                themesGrid.appendChild(card);
+            });
+        }
+
+        renderThemes();
+
+        closePaymentModalBtn.addEventListener('click', () => {
+            paymentModal.style.display = 'none';
+            mainContainer.classList.remove('blurred');
+        });
+
+        unlockThemeBtn.addEventListener('click', () => {
+            const code = ccCodeInput.value.trim();
+            if (code === SECRET_CODE) {
+                isPremiumUnlocked = true;
+                paymentModal.style.display = 'none';
+                mainContainer.classList.remove('blurred');
+                renderThemes();
+                if (pendingTheme) {
+                    chatSection.style.background = pendingTheme.background;
+                }
+                addSystemMessage('All premium themes unlocked successfully!');
+            } else {
+                alert('Invalid CC / Promo info. Payment failed.');
+            }
         });
 
         // Socket.io Real-Time WebSockets
