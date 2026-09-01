@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your slop is boring</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #0f0f11;
+            color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 0.25rem;
+            letter-spacing: -1px;
+            color: #ff3366;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p {
+            font-size: 1.25rem;
+            color: #9ca3af;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .chat-section {
+            background: #1a1a24;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            text-align: left;
+        }
+
+        .btn-bt {
+            background-color: #ff3366;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s ease;
+        }
+
+        .btn-bt:hover {
+            background-color: #e02e5b;
+        }
+
+        .chat-box {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .messages-list {
+            height: 150px;
+            background: #0f0f11;
+            border-radius: 6px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .message-item {
+            margin-bottom: 8px;
+            color: #e2e8f0;
+        }
+
+        .message-item.system {
+            color: #ff3366;
+            font-style: italic;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background: #0f0f11;
+            color: white;
+        }
+
+        .chat-send-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: linear-gradient(135deg, #2e0854, #18052b);
+            padding: 40px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #ffffff;
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffffff;
+            background: none;
+            border: none;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+        }
+
+        .modal-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 24px;
+        }
+
+        .modal-logo {
+            width: 180px;
+            height: 180px;
+            margin-bottom: 30px;
+        }
+
+        .modal-text {
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Your slop is boring</h1>
+        <div class="subtitle">Made by Devos, no slop made</div>
+        <p>No caps, strict NPC energy detected here. Absolute zero aura.</p>
+
+        <div class="chat-section">
+            <button id="connectBtBtn" class="btn-bt">Connect Bluetooth / Join Live Room</button>
+            <div id="chatBox" class="chat-box">
+                <div id="messagesList" class="messages-list"></div>
+                <div class="chat-input-group">
+                    <input type="text" id="msgInput" class="chat-input" placeholder="Type a message...">
+                    <button id="sendBtn" class="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chromeModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="close-btn" id="closeModal">&times;</button>
+            <h2 class="modal-title">Change to Firefox</h2>
+            <svg class="modal-logo" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M495.2 232.8C490.1 143.6 427.6 69.8 343 40.6C302.2 26.5 254.6 24.6 211.5 36.6C227.4 54.3 238.4 76.6 242.9 100.8C248.5 130.8 241.6 162.1 223.5 186.7C205.4 211.3 177.6 227.4 147.2 230.7C116.8 234 86.2 224.3 63.4 204.1C45 229.7 36 261 38.3 292.8C41.7 339.8 65.3 382.6 102.7 410.6C140.1 438.6 188.3 450 234.8 442C331.8 425.3 404.9 346.9 414.2 249C414.8 242.8 415.1 236.6 415.1 230.4C438.9 229.2 462.6 226.4 485.4 222C489 225.5 492.2 229.1 495.2 232.8Z" fill="url(#paint0_linear)"/>
+                <path d="M242.9 100.8C218 80.6 186.2 71.3 154.2 75.1C122.2 78.9 92.9 95.5 73.1 121.2C53.3 146.9 44.7 179.6 49.3 211.5C53.9 243.4 71.3 271.8 97.4 290C80.2 258 77.8 219.7 90.9 185.7C104 151.7 131.5 124.7 166.1 112.1C200.7 99.5 239.3 102.3 271.6 119.7C264.4 111.9 254.4 105.3 242.9 100.8Z" fill="url(#paint1_linear)"/>
+                <path d="M415.1 230.4C415.1 169.6 381.1 114.3 328.7 85.3C359.8 110.8 378.8 148.6 380.7 189.6C382.6 230.6 367.2 270.7 338.4 299.7C309.6 328.7 270 343.8 229.4 341.2C188.8 338.6 151.2 318.5 126.1 286C109.2 313.2 103.2 345.9 109.5 377.2C115.8 408.5 133.9 435.8 160.1 453.5C186.3 471.2 218.4 477.8 249.4 471.9C338.2 454.9 405.3 381 414.2 291C414.8 270.9 415.1 250.6 415.1 230.4Z" fill="url(#paint2_linear)"/>
+                <defs>
+                    <linearGradient id="paint0_linear" x1="38" y1="36" x2="495" y2="442" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#FF9400"/>
+                        <stop offset="0.5" stop-color="#FF0066"/>
+                        <stop offset="1" stop-color="#9059FF"/>
+                    </linearGradient>
+                    <linearGradient id="paint1_linear" x1="49" y1="75" x2="271" y2="290" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#FFD400"/>
+                        <stop offset="1" stop-color="#FF0066"/>
+                    </linearGradient>
+                    <linearGradient id="paint2_linear" x1="109" y1="85" x2="415" y2="471" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#FF0066"/>
+                        <stop offset="1" stop-color="#9059FF"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <p class="modal-text">Trust a more powerful, frendly, and free of spyware browser</p>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        function isChrome() {
+            var ua = navigator.userAgent.toLowerCase();
+            return ua.indexOf('chrome') > -1 && ua.indexOf('edg/') === -1 && ua.indexOf('opr/') === -1;
+        }
+
+        const modal = document.getElementById('chromeModal');
+        const closeModalBtn = document.getElementById('closeModal');
+
+        if (isChrome()) {
+            modal.style.display = 'flex';
+        }
+
+        closeModalBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+
+        // Initialize Real-Time WebSockets Client
+        const socket = io();
+        const connectBtBtn = document.getElementById('connectBtBtn');
+        const chatBox = document.getElementById('chatBox');
+        const messagesList = document.getElementById('messagesList');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        let isConnected = false;
+
+        connectBtBtn.addEventListener('click', async () => {
+            chatBox.style.display = 'block';
+
+            if (!isConnected) {
+                if (navigator.bluetooth && window.isSecureContext) {
+                    try {
+                        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true });
+                        connectBtBtn.textContent = 'BT Connected: ' + (device.name || 'Device');
+                        addSystemMessage('Bluetooth active. Joined global live chat room.');
+                    } catch (error) {
+                        connectBtBtn.textContent = 'Live Server Connected';
+                        addSystemMessage('Bluetooth pairing skipped. Joined live WebSockets room.');
+                    }
+                } else {
+                    connectBtBtn.textContent = 'Live Server Connected';
+                    addSystemMessage('Joined live online WebSockets room.');
+                }
+                isConnected = true;
+            }
+        });
+
+        // Listen for incoming global messages from server
+        socket.on('chat message', (msg) => {
+            appendMessage(msg.user, msg.text);
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+        msgInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const text = msgInput.value.trim();
+            if (text === '') return;
+
+            // Send message to server
+            socket.emit('chat message', { user: 'Anon', text: text });
+            msgInput.value = '';
+        }
+
+        function appendMessage(sender, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-item';
+            msgDiv.textContent = `${sender}: ${text}`;
+            messagesList.appendChild(msgDiv);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-item system';
+            msgDiv.textContent = `[System]: ${text}`;
+            messagesList.appendChild(msgDiv);
+            messagesList.scrollTop = messagesList.scrollHeight;
+        }
+    </script>
+</body>
+</html>
