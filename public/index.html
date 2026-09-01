@@ -26,6 +26,13 @@
         .container {
             max-width: 600px;
             width: 100%;
+            transition: filter 0.3s ease;
+        }
+
+        /* Class to blur the background */
+        .blurred {
+            filter: blur(8px);
+            pointer-events: none;
         }
 
         h1 {
@@ -83,6 +90,31 @@
             margin-top: 15px;
         }
 
+        .user-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            background: #0f0f11;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .user-tag {
+            font-size: 0.9rem;
+            color: #a1a1aa;
+        }
+
+        .change-name-btn {
+            background: none;
+            border: none;
+            color: #ff3366;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-decoration: underline;
+        }
+
         .messages-list {
             height: 150px;
             background: #0f0f11;
@@ -127,6 +159,7 @@
             font-weight: bold;
         }
 
+        /* Modals Common */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -134,7 +167,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -155,6 +189,47 @@
             text-align: center;
         }
 
+        /* Username Modal Specifics */
+        .username-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #6b21a8;
+            background: #110426;
+            color: white;
+            font-size: 1rem;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .preview-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 12px 20px;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            border: 1px dashed #a855f7;
+            word-break: break-word;
+        }
+
+        .done-btn {
+            background-color: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s ease;
+        }
+
+        .done-btn:hover {
+            background-color: #16a34a;
+        }
+
         .close-btn {
             position: absolute;
             top: 15px;
@@ -166,7 +241,6 @@
             border: none;
             cursor: pointer;
             opacity: 0.7;
-            transition: opacity 0.2s ease;
         }
 
         .close-btn:hover {
@@ -176,7 +250,7 @@
         .modal-title {
             font-size: 2rem;
             font-weight: bold;
-            margin-bottom: 24px;
+            margin-bottom: 15px;
         }
 
         .modal-logo {
@@ -194,7 +268,7 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="mainContainer">
         <h1>Your slop is boring</h1>
         <div class="subtitle">Made by Devos, no slop made</div>
         <p>No caps, strict NPC energy detected here. Absolute zero aura.</p>
@@ -202,6 +276,10 @@
         <div class="chat-section">
             <button id="connectBtBtn" class="btn-bt">Connect Bluetooth / Join Live Room</button>
             <div id="chatBox" class="chat-box">
+                <div class="user-control">
+                    <span class="user-tag">Chatting as: <b id="currentUsername">Anon</b></span>
+                    <button id="openNameModal" class="change-name-btn">Change Username</button>
+                </div>
                 <div id="messagesList" class="messages-list"></div>
                 <div class="chat-input-group">
                     <input type="text" id="msgInput" class="chat-input" placeholder="Type a message...">
@@ -239,6 +317,17 @@
         </div>
     </div>
 
+    <div id="usernameModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Change Username</h2>
+            <input type="text" id="newUsernameInput" class="username-input" placeholder="Enter new username..." maxlength="20">
+            <div class="preview-box">
+                Preview: <span id="chatPreview">Anon: Hello world!</span>
+            </div>
+            <button id="saveUsernameBtn" class="done-btn">Hecho</button>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         function isChrome() {
@@ -248,6 +337,7 @@
 
         const modal = document.getElementById('chromeModal');
         const closeModalBtn = document.getElementById('closeModal');
+        const mainContainer = document.getElementById('mainContainer');
 
         if (isChrome()) {
             modal.style.display = 'flex';
@@ -257,7 +347,39 @@
             modal.style.display = 'none';
         });
 
-        // Initialize Real-Time WebSockets Client
+        // Username Modal Logic
+        const usernameModal = document.getElementById('usernameModal');
+        const openNameModalBtn = document.getElementById('openNameModal');
+        const saveUsernameBtn = document.getElementById('saveUsernameBtn');
+        const newUsernameInput = document.getElementById('newUsernameInput');
+        const chatPreview = document.getElementById('chatPreview');
+        const currentUsernameLabel = document.getElementById('currentUsername');
+
+        let myUsername = "Anon";
+
+        openNameModalBtn.addEventListener('click', () => {
+            newUsernameInput.value = myUsername;
+            chatPreview.textContent = `${myUsername}: Hello world!`;
+            usernameModal.style.display = 'flex';
+            mainContainer.classList.add('blurred');
+        });
+
+        newUsernameInput.addEventListener('input', () => {
+            const val = newUsernameInput.value.trim() || 'Anon';
+            chatPreview.textContent = `${val}: Hello world!`;
+        });
+
+        saveUsernameBtn.addEventListener('click', () => {
+            const val = newUsernameInput.value.trim();
+            if (val !== '') {
+                myUsername = val;
+                currentUsernameLabel.textContent = myUsername;
+            }
+            usernameModal.style.display = 'none';
+            mainContainer.classList.remove('blurred');
+        });
+
+        // Socket.io Real-Time WebSockets
         const socket = io();
         const connectBtBtn = document.getElementById('connectBtBtn');
         const chatBox = document.getElementById('chatBox');
@@ -288,7 +410,6 @@
             }
         });
 
-        // Listen for incoming global messages from server
         socket.on('chat message', (msg) => {
             appendMessage(msg.user, msg.text);
         });
@@ -302,8 +423,7 @@
             const text = msgInput.value.trim();
             if (text === '') return;
 
-            // Send message to server
-            socket.emit('chat message', { user: 'Anon', text: text });
+            socket.emit('chat message', { user: myUsername, text: text });
             msgInput.value = '';
         }
 
